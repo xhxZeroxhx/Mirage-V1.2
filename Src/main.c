@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mirage_spi.h" // macros para la conexion spi
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +47,11 @@ SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim3;
 
+UART_HandleTypeDef huart3;
+
 /* USER CODE BEGIN PV */
+uint16_t g_prevTime = 0 ,g_curTime = 0, g_tDelay = 0; //stores timertick
+uint8_t uartByte; //used to send a byte through UART3
 
 /* USER CODE END PV */
 
@@ -55,6 +60,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void SendDataSPI(uint8_t reg, uint8_t data); // función para hablar con el TLC5947
 void InitSPI(void);// función para colocar los datos a enviar
@@ -97,6 +103,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM3_Init();
   MX_SPI1_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
   InitSPI();
@@ -117,6 +124,7 @@ int main(void)
 	  HAL_Delay(50);
 
 */
+	  //HAL_UART_Transmit(&huart3, (uint8_t *)"Hello, world!\r\n", 15U, 100U);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -245,6 +253,39 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 9600;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -281,7 +322,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PB9 */
   GPIO_InitStruct.Pin = GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -352,16 +393,36 @@ void InitSPI(void)
  * */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+ static int count = 0;
+
   /* Prevent unused argument(s) compilation warning */
   UNUSED(GPIO_Pin);
   /* NOTE: This function Should not be modified, when the callback is needed,
            the HAL_GPIO_EXTI_Callback could be implemented in the user file
    */
 
+  //HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);//buscar valor en stm32f103xb.h
+  g_prevTime = g_curTime;
   if(GPIO_Pin == GPIO_PIN_9) // pin del sensor hall
   {
 	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_4); // prendo/apago el led
+	  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+
+	  g_curTime = HAL_GetTick(); //Provides a tick value in millisecond
+	  count ++;
+	  g_tDelay = 60/(g_curTime - g_prevTime); // get the value in rpm
+	  uartByte = (uint8_t)(g_tDelay & 0x00ff); // i keep only the first byte
+
+	  HAL_UART_Transmit(&huart3, &uartByte, 1, 100U);
+	  uartByte =(uint8_t)((g_tDelay >>8) & 0x00ff); // i read the second byte
+	  HAL_UART_Transmit(&huart3, &uartByte, 1, 100U);
+
+
+
   }
+
+  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+  //HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 

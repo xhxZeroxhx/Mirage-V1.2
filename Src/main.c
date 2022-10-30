@@ -53,6 +53,23 @@ UART_HandleTypeDef huart3;
 uint16_t g_prevTime = 0 ,g_curTime = 0, g_tDelay = 0; //stores timertick
 uint8_t uartByte; //used to send a byte through UART3
 
+/*
+ * SPI
+ * https://www.bilibili.com/read/cv11912081/ 出处：bilibili
+ */
+uint16_t leds[24]=
+{
+512,512,1024,2048,2048,2048,
+2048,2048,2048,2048,2048,2048,
+2048,2048,2048,2048,2048,2048,
+2048,2048,3000,2048,2048,3072
+};
+int i=0;
+int flag=0;
+/*
+ * SPI
+ */
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,8 +79,16 @@ static void MX_TIM3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
+/*
+ * SPI
+ */
 void SendDataSPI(uint8_t reg, uint8_t data); // función para hablar con el TLC5947
 void InitSPI(void);// función para colocar los datos a enviar
+void TLC_Update(void);
+void TLC_Write(uint8_t data);
+/*
+ * SPI
+ */
 
 /* USER CODE END PFP */
 
@@ -122,12 +147,36 @@ int main(void)
 	  else
 		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET); // apago el led
 	  HAL_Delay(50);
-
 */
-	  //HAL_UART_Transmit(&huart3, (uint8_t *)"Hello, world!\r\n", 15U, 100U);
+ /*
+* SPI
+*/
+	  if(flag==0)//light fades
+	  				i+=5;
+	  		else//light fades out
+
+	  				i-=5;
+
+	  		if(flag==0&&i==4095)//the brightest light
+	  		{
+	  			HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_SET);
+	  			flag=1;
+	  		}
+	  		if(flag==1&&i==0)//Dimmest light
+	  		{
+	  			HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_RESET);
+	  			flag=0;
+	  		}
+	  		leds[0]=i;//update channel 0 PWM
+	  		TLC_Update();//renew PWM
+	  		HAL_Delay(1);
+/*
+* SPI
+*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -304,7 +353,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, TLC5947_BLANK_Pin|TLC5947_XLAT_Pin|LED_TEST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
@@ -313,18 +362,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA3 PA4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3|GPIO_PIN_4;
+  /*Configure GPIO pins : TLC5947_BLANK_Pin TLC5947_XLAT_Pin LED_TEST_Pin */
+  GPIO_InitStruct.Pin = TLC5947_BLANK_Pin|TLC5947_XLAT_Pin|LED_TEST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  /*Configure GPIO pin : HALL_Pin */
+  GPIO_InitStruct.Pin = HALL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(HALL_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
@@ -349,8 +398,85 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
   HAL_GPIO_TogglePin(BOARD_LED_PORT, BOARD_LED_PIN);//Prendo y apago el pin cada 'x' segundos
 
+
 }
 
+/*
+ * retorno de una INT externa de un pin
+ * */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+ static int count = 0;
+
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(GPIO_Pin);
+  /* NOTE: This function Should not be modified, when the callback is needed,
+           the HAL_GPIO_EXTI_Callback could be implemented in the user file
+   */
+
+  //HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);//buscar valor en stm32f103xb.h
+  g_prevTime = g_curTime;
+  if(GPIO_Pin == GPIO_PIN_9) // pin del sensor hall
+  {
+	  HAL_GPIO_TogglePin(GPIOA, LED_TEST_Pin); // prendo/apago el led
+	  //HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_SET);
+
+	  g_curTime = HAL_GetTick(); //Provides a tick value in millisecond
+	  count ++;
+	  g_tDelay = (g_curTime - g_prevTime);
+	  uartByte = (uint8_t)(g_tDelay & 0x00ff); // i keep only the first byte LSB
+
+	  HAL_UART_Transmit(&huart3, &uartByte, 1, 100U);
+	  uartByte =(uint8_t)((g_tDelay >>8) & 0x00ff); // i read the second byte MSB
+	  HAL_UART_Transmit(&huart3, &uartByte, 1, 100U);
+
+
+
+  }
+
+  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+  //HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+}
+
+/*
+ * SPI
+ */
+void TLC_Update(void)
+{
+    HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET);
+//		HAL_Delay(1);
+    for (int8_t i = 23; i >= 0; i -= 2)
+    {
+        uint8_t send1 = 0;
+        uint8_t send = leds[i] >> 4;
+        TLC_Write(send);
+        send = (leds[i] & 0x000F);
+        send <<= 4;
+        send1 = (leds[i-1]) >> 8;
+        send |= send1;
+        TLC_Write(send);
+        send = leds[i-1];
+        TLC_Write(send);
+    }
+
+    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
+//		HAL_Delay(1);
+    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
+//		HAL_Delay(1);
+    HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
+
+    return ;
+}
+
+
+void TLC_Write(uint8_t data)
+{
+    HAL_SPI_Transmit(&hspi1, &data, sizeof(data), 0);
+    while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_RESET);
+
+    return ;
+}
 /*
  * envio las configuraciones del TLC5947
  */
@@ -389,42 +515,8 @@ void InitSPI(void)
 }
 
 /*
- * retorno de una INT externa de un pin
- * */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
- static int count = 0;
-
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(GPIO_Pin);
-  /* NOTE: This function Should not be modified, when the callback is needed,
-           the HAL_GPIO_EXTI_Callback could be implemented in the user file
-   */
-
-  //HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);//buscar valor en stm32f103xb.h
-  g_prevTime = g_curTime;
-  if(GPIO_Pin == GPIO_PIN_9) // pin del sensor hall
-  {
-	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_4); // prendo/apago el led
-	  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-
-	  g_curTime = HAL_GetTick(); //Provides a tick value in millisecond
-	  count ++;
-	  g_tDelay = 60/(g_curTime - g_prevTime); // get the value in rpm
-	  uartByte = (uint8_t)(g_tDelay & 0x00ff); // i keep only the first byte
-
-	  HAL_UART_Transmit(&huart3, &uartByte, 1, 100U);
-	  uartByte =(uint8_t)((g_tDelay >>8) & 0x00ff); // i read the second byte
-	  HAL_UART_Transmit(&huart3, &uartByte, 1, 100U);
-
-
-
-  }
-
-  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-  //HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-
-}
+ * SPI
+ */
 
 /* USER CODE END 4 */
 

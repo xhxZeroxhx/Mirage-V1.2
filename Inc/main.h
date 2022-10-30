@@ -58,6 +58,17 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TLC5947_BLANK_Pin GPIO_PIN_1
+#define TLC5947_BLANK_GPIO_Port GPIOA
+#define TLC5947_XLAT_Pin GPIO_PIN_3
+#define TLC5947_XLAT_GPIO_Port GPIOA
+#define LED_TEST_Pin GPIO_PIN_4
+#define LED_TEST_GPIO_Port GPIOA
+#define SERIAL_OUT_Pin GPIO_PIN_10
+#define SERIAL_OUT_GPIO_Port GPIOB
+#define HALL_Pin GPIO_PIN_9
+#define HALL_GPIO_Port GPIOB
+#define HALL_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

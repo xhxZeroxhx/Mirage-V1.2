@@ -57,6 +57,7 @@ uint8_t uartByte; //used to send a byte through UART3
  * SPI
  * https://www.bilibili.com/read/cv11912081/ 出处：bilibili
  */
+/*
 uint16_t leds[24]=
 {
 512,512,1024,2048,2048,2048,
@@ -64,6 +65,37 @@ uint16_t leds[24]=
 2048,2048,2048,2048,2048,2048,
 2048,2048,3000,2048,2048,3072
 };
+*/
+/*
+//RED
+uint16_t leds[24]=
+{
+512,0,0,0,0,0,
+0,0,0,0,0,0,
+0,0,0,0,0,0,
+0,0,0,0,0,0
+};
+*/
+
+//GREEN
+uint16_t leds[24]=
+{
+0,4095,0,0,0,0,
+0,0,0,0,0,0,
+0,0,0,0,0,0,
+0,0,0,0,0,0
+};
+
+/*
+//BLUE
+ uint16_t leds[24]=
+{
+0,0,512,0,0,0,
+0,0,0,0,0,0,
+0,0,0,0,0,0,
+0,0,0,0,0,0
+};
+*/
 int i=0;
 int flag=0;
 /*
@@ -75,14 +107,14 @@ int flag=0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 /*
  * SPI
  */
-void SendDataSPI(uint8_t reg, uint8_t data); // función para hablar con el TLC5947
+void SendDataSPI(uint8_t data); // función para hablar con el TLC5947
 void InitSPI(void);// función para colocar los datos a enviar
 void TLC_Update(void);
 void TLC_Write(uint8_t data);
@@ -126,9 +158,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM3_Init();
   MX_SPI1_Init();
   MX_USART3_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
   InitSPI();
@@ -148,35 +180,37 @@ int main(void)
 		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET); // apago el led
 	  HAL_Delay(50);
 */
- /*
-* SPI
-*/
-	  if(flag==0)//light fades
-	  				i+=5;
-	  		else//light fades out
 
-	  				i-=5;
-
-	  		if(flag==0&&i==4095)//the brightest light
-	  		{
-	  			HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_SET);
-	  			flag=1;
-	  		}
-	  		if(flag==1&&i==0)//Dimmest light
-	  		{
-	  			HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_RESET);
-	  			flag=0;
-	  		}
-	  		leds[0]=i;//update channel 0 PWM
-	  		TLC_Update();//renew PWM
-	  		HAL_Delay(1);
-/*
-* SPI
-*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  /*
+	 * SPI
+	 */
 
+//	 	  if(flag==0)//light fades
+//	 	  				i+=5;
+//	 	  		else//light fades out
+//
+//	 	  				i-=5;
+//
+//	 	  		if(flag==0&&i==4095)//the brightest light
+//	 	  		{
+//	 	  			HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_SET);
+//	 	  			flag=1;
+//	 	  		}
+//	 	  		if(flag==1&&i==0)//Dimmest light
+//	 	  		{
+//	 	  			HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_RESET);
+//	 	  			flag=0;
+//	 	  		}
+//	 	  		leds[0]=i;//update channel 0 PWM
+//	 	  		TLC_Update();//renew PWM
+//	 	  		HAL_Delay(1);
+	 /*
+	 * SPI
+	 */
+	  //HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET); // este pin en alto apaga los leds
   }
   /* USER CODE END 3 */
 }
@@ -241,7 +275,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -275,11 +309,11 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 35999;
+  htim3.Init.Prescaler = 2047;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 2000;
+  htim3.Init.Period = 32;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
     Error_Handler();
@@ -396,8 +430,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             the __HAL_TIM_PeriodElapsedCallback could be implemented in the user file
    */
 
-  HAL_GPIO_TogglePin(BOARD_LED_PORT, BOARD_LED_PIN);//Prendo y apago el pin cada 'x' segundos
+  //HAL_GPIO_TogglePin(BOARD_LED_PORT, BOARD_LED_PIN);//Prendo y apago el pin cada 'x' segundos
 
+  /*
+   * Entro en int del timer 3 cada 910.2us ya que
+   * Eligo trabajar con el TLC a una frecuencia inferior a 5.6Mhz y tengo
+   * clock stm32 = 72Mhz
+   * PrescalerSpi = 16 => FSpi = 72M/16 = 4.5Mhz
+   * Periodo para resetear GS* = 1/FSpi * 4096 = 910.2us
+   * GS* = Greyscale
+   * */
+//  HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET); //Blank high apaga leds
+//  HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET); // Xlatch high para leer los datos que envie
+//  HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);// Xlatch low porque necesito pasar de high a low para indicar que haga la lectura
+//  HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);//Blank low reinicio cuenta de GS
+  	  //envio data al tlc
 
 }
 
@@ -472,20 +519,20 @@ void TLC_Update(void)
 
 void TLC_Write(uint8_t data)
 {
-    HAL_SPI_Transmit(&hspi1, &data, sizeof(data), 0);
-    while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_RESET);
+    HAL_SPI_Transmit(&hspi1, &data, sizeof(data), 0); // envio via el spi1
+    while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_RESET); // espero a que termine la transferencia
 
     return ;
 }
 /*
  * envio las configuraciones del TLC5947
  */
-void SendDataSPI(uint8_t reg, uint8_t data)
+void SendDataSPI(uint8_t data)
 {
 
-/*
-	HAL_GPIO_WritePin(SPI_BLANK_PORT, SPI_BLANK_PIN, GPIO_PIN_SET);//deshabilito las salidas del TLC5947
-	HAL_GPIO_WritePin(SPI_XLAT_PORT, SPI_XLAT_PIN, GPIO_PIN_RESET);//deshabilito la escritura del GS
+
+	//HAL_GPIO_WritePin(SPI_BLANK_PORT, SPI_BLANK_PIN, GPIO_PIN_SET);//deshabilito las salidas del TLC5947
+	//HAL_GPIO_WritePin(SPI_XLAT_PORT, SPI_XLAT_PIN, GPIO_PIN_RESET);//deshabilito la escritura del GS
 
 	/*
 	  * @brief  Transmit an amount of data in blocking mode.
@@ -495,16 +542,16 @@ void SendDataSPI(uint8_t reg, uint8_t data)
 	  * @param  Size: amount of data to be sent
 	  * @param  Timeout: Timeout duration
 	  * @retval HAL status
-	  */
-/*
-	HAL_SPI_Transmit(&hspi1, &reg, 1, 1000);//envio registro a configurar, tamaño de la info 1byte, timeout
+	 */
+
+	HAL_SPI_Transmit(&hspi1, &data, sizeof(data), 0);//le escribo al tlc5947, mando 8 bits y tengo 0" de timeout
 	while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);//espero hasta que concluya la comunicación
 
-	HAL_SPI_Transmit(&hspi1, &data, 1, 1000);//envio data a configurar, tamaño de la info 1byte, timeout
-	while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);//espero hasta que concluya la comunicación
+//	HAL_SPI_Transmit(&hspi1, &data, 1, 1000);//envio data a configurar, tamaño de la info 1byte, timeout
+//	while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);//espero hasta que concluya la comunicación
+//
+//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//de-seleciono dispositivo a usar colocando un '0'
 
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//de-seleciono dispositivo a usar colocando un '0'
-*/
 }
 /*
  * llama a SendDataSPI y le pasa los valores a usar
@@ -512,6 +559,30 @@ void SendDataSPI(uint8_t reg, uint8_t data)
 void InitSPI(void)
 {
 
+	//uint8_t testbyte = 0x00;
+	uint8_t testbyte[36] =
+	{0x00,0x0F,0xFF,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00
+	};
+	int i = 0;
+
+	HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET);
+	for(i = 0; i<36; i++)
+	{
+		SendDataSPI(testbyte[i]);
+	}
+    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
+	HAL_Delay(1);
+    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
 }
 
 /*

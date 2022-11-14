@@ -64,8 +64,6 @@ void Error_Handler(void);
 #define TLC5947_XLAT_GPIO_Port GPIOA
 #define LED_TEST_Pin GPIO_PIN_4
 #define LED_TEST_GPIO_Port GPIOA
-#define SERIAL_OUT_Pin GPIO_PIN_10
-#define SERIAL_OUT_GPIO_Port GPIOB
 #define HALL_Pin GPIO_PIN_9
 #define HALL_GPIO_Port GPIOB
 #define HALL_EXTI_IRQn EXTI9_5_IRQn

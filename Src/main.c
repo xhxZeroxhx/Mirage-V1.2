@@ -112,12 +112,10 @@ static void MX_SPI1_Init(void);
 /*
  * SPI
  */
-//void SendDataSPI(uint8_t data); // función para hablar con el TLC5947
-//void InitSPI(void);// función para colocar los datos a enviar
-//void TLC_Update(void);
-////void TLC_Write(uint8_t data);// prototipo para mandar solo 1 byte por vez
-//void TLC_Write(uint8_t* data);// prototipo para mandar todo un vector de bytes
-//void FillArray(uint8_t color);// prototipo para llenar el array en la prueba de los canales
+
+void TLC_Update(void);
+void TLC_Write(uint8_t* data);// prototipo para mandar todo un vector de bytes
+void FillArray(uint8_t color);// prototipo para llenar el array en la prueba de los canales
 /*
  * SPI
  */
@@ -210,13 +208,13 @@ int main(void)
 //	 	  	}
 //	 	  	leds[0]=i;//update PWM of channel 0
 	  	   // prueba random
-//	  	  HAL_Delay(500);
+	  	  HAL_Delay(250);
 	 	  	TLC_Update();//renew PWM
-
-//	 	  	FillArray(imain);
-//	 	  	if(imain > 2 )
-//	 	  		imain = 0;
-	 	  	imain ++;
+//
+////	 	  	FillArray(imain);
+////	 	  	if(imain > 2 )
+////	 	  		imain = 0;
+//	 	  	imain ++;
 //	 	  	HAL_Delay(1);
 	 /*
 	 * SPI
@@ -546,7 +544,6 @@ void TLC_Update(void)
 
         spi_send[si]=send;//
         si++;
-//        TLC_Write(send);
 
         send = (leds[ji] & 0x000F);
         send <<= 4;
@@ -555,13 +552,13 @@ void TLC_Update(void)
 
         spi_send[si]=send;//
         si++;
-        //        TLC_Write(send);
+
 
         send = leds[ji+1];//borro 4 bits más significativos del canal i-1 y mando LSB del canal i-1
 
         spi_send[si]=send;//
         si++;
-//        TLC_Write(send);
+
     }
     TLC_Write(spi_send);
 
@@ -571,18 +568,20 @@ void TLC_Update(void)
 //		HAL_Delay(1);
     HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
 
-    return ;
 }
 
 
 //void TLC_Write(uint8_t data)
 void TLC_Write(uint8_t *data)
 {
-//    HAL_SPI_Transmit(&hspi1, &data, sizeof(data), 0); // envio via el sp1 de solo 1 byte
-		HAL_SPI_Transmit(&hspi1,(uint8_t*)(data), SPI_BYTE_AMOUNT,0); // envio via el sp1 de 1 todos los bytes que tenga que mandar
-    while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY); // espero a que termine la transferencia
+//	for(int array_index = 0; array_index<SPI_BYTE_AMOUNT;array_index++)
+//		{
+//			HAL_SPI_Transmit(&hspi1, &data[array_index], sizeof(data), 0); // envio via el sp1 de solo 1 byte
+		HAL_SPI_Transmit(&hspi1,data, SPI_BYTE_AMOUNT,1000); // envio via el sp1 de 1 todos los bytes que tenga que mandar
+    while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY); // espero a que termine la transferen
+//		}
 
-    return ;
+
 }
 /*
  * Uso esta funcion para llenar los vectores de prueba
@@ -619,66 +618,7 @@ void FillArray(uint8_t color)
 
 
 
-///*
-// * envio las configuraciones del TLC5947
-// */
-//void SendDataSPI(uint8_t data)
-//{
-//
-//
-//	//HAL_GPIO_WritePin(SPI_BLANK_PORT, SPI_BLANK_PIN, GPIO_PIN_SET);//deshabilito las salidas del TLC5947
-//	//HAL_GPIO_WritePin(SPI_XLAT_PORT, SPI_XLAT_PIN, GPIO_PIN_RESET);//deshabilito la escritura del GS
-//
-//	/*
-//	  * @brief  Transmit an amount of data in blocking mode.
-//	  * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
-//	  *               the configuration information for SPI module.
-//	  * @param  pData: pointer to data buffer
-//	  * @param  Size: amount of data to be sent
-//	  * @param  Timeout: Timeout duration
-//	  * @retval HAL status
-//	 */
-//
-//	HAL_SPI_Transmit(&hspi1, &data, sizeof(data), 0);//le escribo al tlc5947, mando 8 bits y tengo 0" de timeout
-//	while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);//espero hasta que concluya la comunicación
-//
-////	HAL_SPI_Transmit(&hspi1, &data, 1, 1000);//envio data a configurar, tamaño de la info 1byte, timeout
-////	while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);//espero hasta que concluya la comunicación
-////
-////	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//de-seleciono dispositivo a usar colocando un '0'
-//
-//}
-///*
-// * llama a SendDataSPI y le pasa los valores a usar
-// */
-//void InitSPI(void)
-//{
-//
-//	//uint8_t testbyte = 0x00;
-//	uint8_t testbyte[36] =
-//	{0x00,0x0F,0xFF,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00,
-//	 0x00,0x00,0x00,0x00
-//	};
-//	int i = 0;
-//
-//	HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET);
-//	for(i = 0; i<36; i++)
-//	{
-//		SendDataSPI(testbyte[i]);
-//	}
-//    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
-//	HAL_Delay(1);
-//    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
-//    HAL_Delay(1);
-//    HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
-//}
+
 
 /*
  * SPI

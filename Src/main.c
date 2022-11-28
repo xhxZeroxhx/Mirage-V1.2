@@ -113,8 +113,9 @@ static void MX_SPI1_Init(void);
  * SPI
  */
 
+void TLC_Write(uint8_t data);// prototipo para mandar todo un vector de bytes
+//void TLC_Write(uint8_t* data);// prototipo para mandar todo un vector de bytes
 void TLC_Update(void);
-void TLC_Write(uint8_t* data);// prototipo para mandar todo un vector de bytes
 void FillArray(uint8_t color);// prototipo para llenar el array en la prueba de los canales
 /*
  * SPI
@@ -162,6 +163,7 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+
   FillArray(RED);
   //InitSPI();
   /* USER CODE END 2 */
@@ -186,40 +188,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  /*
-	 * SPI
-	 */
 
-//	 	  if(flag==0)//light fades
-//	 		 imain+=5;
-//
-//	 	  else//light fades out
-//	 		 imain-=5;
-//
-//	 	  if(flag==0&&imain==4095)//the brightest light
-//	 	  	{
-////	 	  		HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_SET);
-//	 	  		flag=1;
-//	 	  	}
-//	 	  	if(flag==1&&imain==0)//Dimmest light
-//	 	  	{
-////	 	  		HAL_GPIO_WritePin(GPIOA, LED_TEST_Pin, GPIO_PIN_RESET);
-//	 	  		flag=0;
-//	 	  	}
-//	 	  	leds[0]=i;//update PWM of channel 0
-	  	   // prueba random
-	  	  HAL_Delay(250);
+
 	 	  	TLC_Update();//renew PWM
-//
-////	 	  	FillArray(imain);
-////	 	  	if(imain > 2 )
-////	 	  		imain = 0;
+//	 	  	FillArray(imain);
+//	 	  	if(imain > 2 )
+//	 	  		imain = 0;
 //	 	  	imain ++;
 //	 	  	HAL_Delay(1);
-	 /*
-	 * SPI
-	 */
-	  //HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET); // este pin en alto apaga los leds
+
   }
   /* USER CODE END 3 */
 }
@@ -284,7 +261,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -438,8 +415,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* NOTE : This function Should not be modified, when the callback is needed,
             the __HAL_TIM_PeriodElapsedCallback could be implemented in the user file
    */
-
+if(htim->Instance == TIM3)
   HAL_GPIO_TogglePin(BOARD_LED_PORT, BOARD_LED_PIN);//Prendo y apago el pin cada 'x' segundos
+
 
   /*
    * Entro en int del timer 3 cada 910.2us ya que
@@ -560,7 +538,10 @@ void TLC_Update(void)
         si++;
 
     }
-    TLC_Write(spi_send);
+
+    for(int m =0;m<SPI_BYTE_AMOUNT;m++)
+    	TLC_Write(spi_send[m]);
+
 
     HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
 //		HAL_Delay(1);
@@ -571,15 +552,15 @@ void TLC_Update(void)
 }
 
 
-//void TLC_Write(uint8_t data)
-void TLC_Write(uint8_t *data)
+void TLC_Write(uint8_t data)
+//void TLC_Write(uint8_t *data)
 {
-//	for(int array_index = 0; array_index<SPI_BYTE_AMOUNT;array_index++)
-//		{
-//			HAL_SPI_Transmit(&hspi1, &data[array_index], sizeof(data), 0); // envio via el sp1 de solo 1 byte
-		HAL_SPI_Transmit(&hspi1,data, SPI_BYTE_AMOUNT,1000); // envio via el sp1 de 1 todos los bytes que tenga que mandar
+	uint8_t prueba = 0x00;
+//	HAL_SPI_Transmit(&hspi1, &data[array_index], sizeof(data), 0); // envio via el sp1 de solo 1 byte
+//	HAL_SPI_Transmit(&hspi1,data, SPI_BYTE_AMOUNT,1000); // envio via el sp1 de 1 todos los bytes que tenga que mandar
+//	HAL_SPI_Transmit(&hspi1,&prueba, sizeof(prueba),1000);
+	HAL_SPI_Transmit(&hspi1,&data, sizeof(data),1000);
     while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY); // espero a que termine la transferen
-//		}
 
 
 }
@@ -615,9 +596,6 @@ void FillArray(uint8_t color)
 		leds[array_index] = 4095;//intensidad tenue
 
 }
-
-
-
 
 
 /*

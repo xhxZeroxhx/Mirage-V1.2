@@ -67,39 +67,11 @@ uint8_t spi_send[SPI_BYTE_AMOUNT]={}; //acá escribo los valores a mandar via sp
 //2048,2048,3000,2048,2048,3072
 //};
 
-//RED por algun motivo flashero desde [15] hasta  [23]
+//RED por algun motivo flashero desde [15] hasta  [23] ponia 65355
 uint16_t leds[24]=
 {}; // todo en 0, le pongo valores con FillArray
-
-
-//GREEN
-//uint16_t leds[24]=
-//{
-//0,4095,0,0,0,0,
-//0,0,0,0,0,0,
-//0,0,0,0,0,0,
-//0,0,0,0,0,0
-//};
-
-
-//BLUE
-// uint16_t leds[24]=
-//{
-//0,0,512,0,0,0,
-//0,0,0,0,0,0,
-//0,0,0,0,0,0,
-//0,0,0,0,0,0
-//};
-
-int imain=0;
-int flag=0;
-
-
-
-/*
- * SPI
- */
-
+uint8_t imain=0;
+uint8_t flag=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,20 +80,13 @@ static void MX_GPIO_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_SPI1_Init(void);
-/* USER CODE BEGIN PFP */
-/*
- * SPI
- */
 
-void TLC_Write(uint8_t data);// prototipo para mandar todo un vector de bytes
-//void TLC_Write(uint8_t* data);// prototipo para mandar todo un vector de bytes
+/* USER CODE BEGIN PFP */
+//void TLC_Write(uint8_t data);// prototipo para mandar todo un vector de bytes
+void TLC_Write(uint8_t data[]);// prototipo para mandar todo un vector de bytes
+
 void TLC_Update(void);
 void FillArray(uint8_t color);// prototipo para llenar el array en la prueba de los canales
-/*
- * SPI
- */
-
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -164,7 +129,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
 
-  FillArray(RED);
+  FillArray(GREEN);
   //InitSPI();
   /* USER CODE END 2 */
 
@@ -190,11 +155,12 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 
+//	  HAL_Delay(250);
 	 	  	TLC_Update();//renew PWM
 //	 	  	FillArray(imain);
-//	 	  	if(imain > 2 )
-//	 	  		imain = 0;
-//	 	  	imain ++;
+	 	  	if(imain > 2 )
+	 	  		imain = 0;
+	 	  	imain ++;
 //	 	  	HAL_Delay(1);
 
   }
@@ -515,53 +481,54 @@ void TLC_Update(void)
 //        si++;
 ////        TLC_Write(send);
 //    }
-    for (int8_t ji = 0; ji < TOTAL_CHANNELS; ji += 2) // lleno
+    for (int8_t i = 0; i < TOTAL_CHANNELS; i += 2) // lleno
     {
         uint8_t send1 = 0;
-        uint8_t send = leds[ji] >> 4; // mando MSB
+        uint8_t send = leds[i] >> 4; // mando MSB
 
         spi_send[si]=send;//
         si++;
 
-        send = (leds[ji] & 0x000F);
+        send = (leds[i] & 0x000F);
         send <<= 4;
-        send1 = (leds[ji+1]) >> 8;
+        send1 = (leds[i+1]) >> 8;
         send |= send1; //me quedo con 4 bits menos significativos del canal i y 4 bits más significativos del canal i-1
 
         spi_send[si]=send;//
         si++;
 
 
-        send = leds[ji+1];//borro 4 bits más significativos del canal i-1 y mando LSB del canal i-1
+        send = leds[i+1];//borro 4 bits más significativos del canal i-1 y mando LSB del canal i-1
 
         spi_send[si]=send;//
         si++;
 
     }
 
-    for(int m =0;m<SPI_BYTE_AMOUNT;m++)
-    	TLC_Write(spi_send[m]);
+//    for(int m =0;m<SPI_BYTE_AMOUNT;m++)
+    	TLC_Write(spi_send);
 
-
+	FillArray(imain);
     HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
 //		HAL_Delay(1);
     HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
 //		HAL_Delay(1);
     HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
+    return;
 
 }
 
 
-void TLC_Write(uint8_t data)
+void TLC_Write(uint8_t data[])
 //void TLC_Write(uint8_t *data)
 {
 	uint8_t prueba = 0x00;
 //	HAL_SPI_Transmit(&hspi1, &data[array_index], sizeof(data), 0); // envio via el sp1 de solo 1 byte
-//	HAL_SPI_Transmit(&hspi1,data, SPI_BYTE_AMOUNT,1000); // envio via el sp1 de 1 todos los bytes que tenga que mandar
+	HAL_SPI_Transmit(&hspi1,data, SPI_BYTE_AMOUNT,1000); // envio via el sp1 de 1 todos los bytes que tenga que mandar
 //	HAL_SPI_Transmit(&hspi1,&prueba, sizeof(prueba),1000);
-	HAL_SPI_Transmit(&hspi1,&data, sizeof(data),1000);
+//HAL_SPI_Transmit(&hspi1,&data, sizeof(data),0);
     while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY); // espero a que termine la transferen
-
+    return;
 
 }
 /*
@@ -594,7 +561,7 @@ void FillArray(uint8_t color)
 
 	for (array_index=position; array_index<TOTAL_CHANNELS;array_index+=increment)
 		leds[array_index] = 4095;//intensidad tenue
-
+return;
 }
 
 

@@ -155,7 +155,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 
-//	  HAL_Delay(250);
+//	  HAL_Delay(500);
 	 	  	TLC_Update();//renew PWM
 //	 	  	FillArray(imain);
 	 	  	if(imain > 2 )
@@ -560,7 +560,7 @@ void FillArray(uint8_t color)
 		leds[array_index] = 0;//borro todos los valores
 
 	for (array_index=position; array_index<TOTAL_CHANNELS;array_index+=increment)
-		leds[array_index] = 4095;//intensidad tenue
+		leds[array_index] = 4095*1/(position+1);//intensidad tenue
 return;
 }
 

@@ -77,10 +77,9 @@ uint8_t flag=0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM3_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_SPI1_Init(void);
-
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 //void TLC_Write(uint8_t data);// prototipo para mandar todo un vector de bytes
 void TLC_Write(uint8_t data[]);// prototipo para mandar todo un vector de bytes
@@ -123,11 +122,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM3_Init();
   MX_USART3_UART_Init();
   MX_SPI1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+//  HAL_TIM_Base_Start_IT(&htim2);
 
   FillArray(GREEN);
   //InitSPI();
@@ -156,11 +156,11 @@ int main(void)
 
 
 //	  HAL_Delay(500);
-	 	  	TLC_Update();//renew PWM
-//	 	  	FillArray(imain);
-	 	  	if(imain > 2 )
-	 	  		imain = 0;
-	 	  	imain ++;
+//	 	  	TLC_Update();//renew PWM
+//////	 	  	FillArray(imain);
+//	 	  	if(imain > 2 )
+//	 	  		imain = 0;
+//	 	  	imain ++;
 //	 	  	HAL_Delay(1);
 
   }
@@ -261,11 +261,11 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 2048;
+  htim3.Init.Prescaler = 35999;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 32;
+  htim3.Init.Period = 2000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
     Error_Handler();
@@ -383,7 +383,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
    */
 if(htim->Instance == TIM3)
   HAL_GPIO_TogglePin(BOARD_LED_PORT, BOARD_LED_PIN);//Prendo y apago el pin cada 'x' segundos
+//if(htim->Instance == TIM2)
+//{
+	  	TLC_Update();//renew PWM
+	  	imain ++;
+	  	if(imain > 2 )
+	  		imain = 0;
+	 	FillArray(imain);
 
+//}
 
   /*
    * Entro en int del timer 3 cada 910.2us ya que
@@ -506,9 +514,10 @@ void TLC_Update(void)
     }
 
 //    for(int m =0;m<SPI_BYTE_AMOUNT;m++)
-    	TLC_Write(spi_send);
+    TLC_Write(spi_send);
 
-	FillArray(imain);
+//    imain++;
+//	FillArray(imain);
     HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
 //		HAL_Delay(1);
     HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
@@ -522,12 +531,12 @@ void TLC_Update(void)
 void TLC_Write(uint8_t data[])
 //void TLC_Write(uint8_t *data)
 {
-	uint8_t prueba = 0x00;
+//	uint8_t prueba = 0x00;
 //	HAL_SPI_Transmit(&hspi1, &data[array_index], sizeof(data), 0); // envio via el sp1 de solo 1 byte
 	HAL_SPI_Transmit(&hspi1,data, SPI_BYTE_AMOUNT,1000); // envio via el sp1 de 1 todos los bytes que tenga que mandar
-//	HAL_SPI_Transmit(&hspi1,&prueba, sizeof(prueba),1000);
-//HAL_SPI_Transmit(&hspi1,&data, sizeof(data),0);
-    while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY); // espero a que termine la transferen
+////	HAL_SPI_Transmit(&hspi1,&prueba, sizeof(prueba),1000);
+////HAL_SPI_Transmit(&hspi1,&data, sizeof(data),0);
+//    while(HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY); // espero a que termine la transferen
     return;
 
 }

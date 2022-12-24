@@ -24,21 +24,21 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Mirage\ V1.2.elf \
+Mirage-V1.2.elf \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Mirage\ V1.2.list \
+Mirage-V1.2.list \
 
 
 # All Target
-all: Mirage\ V1.2.elf secondary-outputs
+all: Mirage-V1.2.elf secondary-outputs
 
 # Tool invocations
-Mirage\ V1.2.elf: $(OBJS) $(USER_OBJS) C:\Users\Admin\STM32CubeIDE\workspace_1.0.1\Mirage\ V1.2\STM32F103C8TX_FLASH.ld
-	arm-none-eabi-gcc -o "Mirage V1.2.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Admin\STM32CubeIDE\workspace_1.0.1\Mirage V1.2\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Mirage V1.2.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Mirage-V1.2.elf: $(OBJS) $(USER_OBJS) C:\Users\Marta\STM32CubeIDE\workspace_1.0.1\Mirage-V1.2\STM32F103C8TX_FLASH.ld
+	arm-none-eabi-gcc -o "Mirage-V1.2.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Marta\STM32CubeIDE\workspace_1.0.1\Mirage-V1.2\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Mirage-V1.2.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -47,8 +47,8 @@ default.size.stdout: $(EXECUTABLES)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Mirage\ V1.2.list: $(EXECUTABLES)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Mirage V1.2.list"
+Mirage-V1.2.list: $(EXECUTABLES)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Mirage-V1.2.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 

@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=C:/Users/Admin/STM32CubeIDE/workspace_1.0.1/Mirage V1.2/Inc
+HeaderPath=C:/Users/Marta/STM32CubeIDE/workspace_1.0.1/Mirage-V1.2/Inc
 HeaderFiles=stm32f1xx_it.h;stm32f1xx_hal_conf.h;main.h;
-SourcePath=C:/Users/Admin/STM32CubeIDE/workspace_1.0.1/Mirage V1.2/Src
+SourcePath=C:/Users/Marta/STM32CubeIDE/workspace_1.0.1/Mirage-V1.2/Src
 SourceFiles=stm32f1xx_it.c;stm32f1xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]

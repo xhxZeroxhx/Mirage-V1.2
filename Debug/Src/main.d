@@ -23,7 +23,7 @@ Src/main.o: ../Src/main.c ../Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
- C:/Users/Admin/STM32CubeIDE/workspace_1.0.1/Mirage\ V1.2/Custom/Inc/mirage_spi.h
+ C:/Users/Marta/STM32CubeIDE/workspace_1.0.1/Mirage-V1.2/Custom/Inc/mirage_spi.h
 
 ../Inc/main.h:
 
@@ -75,4 +75,4 @@ Src/main.o: ../Src/main.c ../Inc/main.h \
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
 
-C:/Users/Admin/STM32CubeIDE/workspace_1.0.1/Mirage\ V1.2/Custom/Inc/mirage_spi.h:
+C:/Users/Marta/STM32CubeIDE/workspace_1.0.1/Mirage-V1.2/Custom/Inc/mirage_spi.h:

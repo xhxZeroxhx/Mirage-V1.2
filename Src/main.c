@@ -77,9 +77,9 @@ uint8_t flag=0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART3_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 //void TLC_Write(uint8_t data);// prototipo para mandar todo un vector de bytes
 void TLC_Write(uint8_t data[]);// prototipo para mandar todo un vector de bytes
@@ -98,7 +98,7 @@ void FillArray(uint8_t color);// prototipo para llenar el array en la prueba de 
   * @retval int
   */
 int main(void)
-{
+ {
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -122,9 +122,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART3_UART_Init();
   MX_SPI1_Init();
   MX_TIM3_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
 //  HAL_TIM_Base_Start_IT(&htim2);
@@ -135,7 +135,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//  HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET); // este pin en alto apaga los leds
+//  HAL_GPIO_WritePin(TLC5947_BLANK_GPIO_Port, TLC5947_BLANK_Pin, GPIO_PIN_SET); // este pin en alto apaga los leds
 //  FillArray(GREEN);
   while (1)
   {
@@ -336,17 +336,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(BLUEPILL_LED_GPIO_Port, BLUEPILL_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, TLC5947_BLANK_Pin|TLC5947_XLAT_Pin|LED_TEST_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PC13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  /*Configure GPIO pin : BLUEPILL_LED_Pin */
+  GPIO_InitStruct.Pin = BLUEPILL_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(BLUEPILL_LED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : TLC5947_BLANK_Pin TLC5947_XLAT_Pin LED_TEST_Pin */
   GPIO_InitStruct.Pin = TLC5947_BLANK_Pin|TLC5947_XLAT_Pin|LED_TEST_Pin;
@@ -355,11 +355,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : HALL_Pin */
-  GPIO_InitStruct.Pin = HALL_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin : PB9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(HALL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
@@ -382,7 +382,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             the __HAL_TIM_PeriodElapsedCallback could be implemented in the user file
    */
 if(htim->Instance == TIM3)
-  HAL_GPIO_TogglePin(BOARD_LED_PORT, BOARD_LED_PIN);//Prendo y apago el pin cada 'x' segundos
+  HAL_GPIO_TogglePin(BLUEPILL_LED_GPIO_Port, BLUEPILL_LED_Pin);//Prendo y apago el pin del board de bluepill cada 'x' segundos
 //if(htim->Instance == TIM2)
 //{
 	  	TLC_Update();//renew PWM
@@ -402,10 +402,10 @@ if(htim->Instance == TIM3)
    * GS* = Greyscale
    * */
 
-//  HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET); //Blank high apaga leds
-//  HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET); // Xlatch high para leer los datos que envie
-//  HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);// Xlatch low porque necesito pasar de high a low para indicar que haga la lectura
-//  HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);//Blank low reinicio cuenta de GS
+//  HAL_GPIO_WritePin(TLC5947_BLANK_GPIO_Port, TLC5947_BLANK_Pin, GPIO_PIN_SET); //Blank high apaga leds
+//  HAL_GPIO_WritePin(TLC5947_XLAT_GPIO_Port, TLC5947_XLAT_Pin, GPIO_PIN_SET); // Xlatch high para leer los datos que envie
+//  HAL_GPIO_WritePin(TLC5947_XLAT_GPIO_Port, TLC5947_XLAT_Pin, GPIO_PIN_RESET);// Xlatch low porque necesito pasar de high a low para indicar que haga la lectura
+//  HAL_GPIO_WritePin(TLC5947_BLANK_GPIO_Port, TLC5947_BLANK_Pin, GPIO_PIN_RESET);//Blank low reinicio cuenta de GS
 //  	  //envio data al tlc
 //	for(i = 0; i<36; i++)
 //	{
@@ -463,7 +463,7 @@ void TLC_Update(void)
 {
 	uint8_t si = 0;//Lo uso para el vector a enviar via SPI
 
-    HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(TLC5947_BLANK_GPIO_Port, TLC5947_BLANK_Pin, GPIO_PIN_SET);
 //		HAL_Delay(1);
 //    for (int8_t ji = TOTAL_CHANNELS - 1 ; ji >= 0; ji -= 2)
 //    {
@@ -518,11 +518,11 @@ void TLC_Update(void)
 
 //    imain++;
 //	FillArray(imain);
-    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(TLC5947_XLAT_GPIO_Port, TLC5947_XLAT_Pin, GPIO_PIN_SET);
 //		HAL_Delay(1);
-    HAL_GPIO_WritePin(TLC5947_XLAT_PORT, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(TLC5947_XLAT_GPIO_Port, TLC5947_XLAT_Pin, GPIO_PIN_RESET);
 //		HAL_Delay(1);
-    HAL_GPIO_WritePin(TLC5947_BLANK_PORT, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(TLC5947_BLANK_GPIO_Port, TLC5947_BLANK_Pin, GPIO_PIN_RESET);
     return;
 
 }
@@ -549,16 +549,20 @@ void TLC_Write(uint8_t data[])
 void FillArray(uint8_t color)
 {
 	uint8_t position = 0, increment = 3,array_index = 0;
+	uint16_t intensity = 32;
 	switch(color)
 	{
 	case 0:
 		position = 0;
+		intensity = 4095;
 		break;
 	case 1:
 		position = 1;
+		intensity = 2048;
 		break;
 	case 2:
 		position = 2;
+		intensity = 1024;
 		break;
 	default:
 		//RGB
@@ -569,7 +573,8 @@ void FillArray(uint8_t color)
 		leds[array_index] = 0;//borro todos los valores
 
 	for (array_index=position; array_index<TOTAL_CHANNELS;array_index+=increment)
-		leds[array_index] = 4095*1/(position+1);//intensidad tenue
+//		leds[array_index] = 4095*1/(position+1);//intensidad tenue
+		leds[array_index] =intensity;
 return;
 }
 
